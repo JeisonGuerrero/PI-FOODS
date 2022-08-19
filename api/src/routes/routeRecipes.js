@@ -1,12 +1,17 @@
 const { Router } = require('Express');
 
 // import all controllers
-import getAllRecipes from '../Controller/index.js';
+const { getAllRecipes } = require ('../Controller/controlador.js');
 
-const routes = new Router();
+const routesRecipes = Router();
 
 // Add routes
-routes.get('/', getAllRecipes);
+routesRecipes.get('/', async (req, res) => {
+    const recipes = await getAllRecipes ();
+    res.status(200).send(recipes)
+});
 
 
-module.exports = routes;
+module.exports = {
+    routesRecipes
+};
