@@ -7,8 +7,10 @@ const routesRecipes = Router();
 
 // Add routes
 routesRecipes.get('/', async (req, res) => {
-    const recipes = await getAllRecipes ();
-    res.status(200).send(recipes)
+
+        const recipes = await getAllRecipes ();
+        res.status(200).send(recipes)      
+
 });
 
 
