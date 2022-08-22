@@ -1,29 +1,12 @@
 const axios = require('axios');
-const { Type } = require('../db.js')
+const { Recipe, Type } = require('../db.js')
+const { END_GENE } = process.env;
 
-const getAllRecipes = async (req, res) => {
-    const { name }  = req.query;
-    if (name) {
-        try {
-            const recipes = await axios(`https://api.spoonacular.com/recipes/complexSearch?apiKey=ec3d0eca99694ecca912abe7d08d2f18&query=${name}&number=2`)
-            let resApi = [{
-                    id: recipes.data.result.id,
-                    name: recipes.data.result.title,
-                    steps: recipes.data.result.analyzedInstructions[0] &&
-                            recipes.data.result.analyzedInstructions[0].steps ? 
-                            recipes.data.result.analyzedInstructions[0].steps.map(s => s.step).join(" \n"):'',
-                    image: recipes.data.result.image,
-                    summary: recipes.data.result.summary.replace(/(<([^>]+)>)/gi, ""),
-                    healtScore: recipes.data.result.healthScore,
-            }]
-            return resApi
-        }
-        catch (error) {
-            console.log(error);
-        }
-    }else{
-        try {
-            const response = await axios('https://api.spoonacular.com/recipes/complexSearch?apiKey=ec3d0eca99694ecca912abe7d08d2f18&addRecipeInformation=true&number=2')        
+const cantidadPedidos = 2;
+
+const getAllRecipes = async () => {
+         try {
+            const response = await axios(END_GENE)        
             const promise = await response.data.results.map(ele => {
                 return {
                     id: ele.id,
@@ -34,6 +17,7 @@ const getAllRecipes = async (req, res) => {
                     image: ele.image,
                     summary: ele.summary.replace(/(<([^>]+)>)/gi, ""),
                     healtScore: ele.healthScore,
+                    diets: ele.diets
                 }
             })
             return promise
@@ -42,69 +26,83 @@ const getAllRecipes = async (req, res) => {
             console.log(err)
         }
     }
+
+const getQueryRecipes = async (name) => {
+    try {
+        const recipes = await axios(`https://api.spoonacular.com/recipes/complexSearch?apiKey=ec3d0eca99694ecca912abe7d08d2f18&query=${name}&addRecipeInformation=true&number=${cantidadPedidos}`)
+        const promiseRecipes = await recipes.data.results.map(ele => {
+            return {
+                id: ele.id,
+                name: ele.title,
+                steps: ele.analyzedInstructions[0] &&
+                        ele.analyzedInstructions[0].steps ? 
+                        ele.analyzedInstructions[0].steps.map(s => s.step).join(" \n"):'',
+                image: ele.image,
+                summary: ele.summary.replace(/(<([^>]+)>)/gi, ""),
+                healtScore: ele.healthScore,
+                diets: ele.diets
+                     }
+                })
+            return promiseRecipes
+    } catch (error) {
+        console.log(error)
+    }
 }
 
-// const getAllRecipes = (req, res) => {
-//     const { name } = req.query;
-//     try {
-//         if (name) {
-//             const dbInfo = await Recipe.findAll({
-//                 where: {
-//                     name: name,
-//                 },
-//                 include: {
-//                     model: Type
-//                 }
-//             })
-//             if (dbInfo != 0) {
-//                 let resDb = dbInfo.map(p => {
-//                     return {
-//                         id: p.id,
-//                         name: p.name,
-//                         steps: p.steps.map(e => e.name),
-//                         image: p.image,
-//                         summary: p.summary,
-//                         healtScore: p.healtScore,
-//                     }
-//                 })
-//                 res.status(200).send(resDb)
+const dbInfo = async () => {
+    try {
+        const db = await Recipe.findAll({
+            includes: [ { model: Type, 
+                attributes: ['name'] }],
+            throught: {
+                attributes: []
+            },
+        })
+        return db
+    } catch (error) {
+        console.log(error)
+    }
+}
 
-//             } else {
-//                 const foodApi = (await axios(`https://api.spoonacular.com/recipes/complexSearch?apiKey=ec3d0eca99694ecca912abe7d08d2f18&query=${name}&number=2`))
-//                 let resApi = [{
-//                     id: data.result.id,
-//                     name: data.result.title,
-//                     steps: data.result.analyzedInstructions[0] &&
-//                             data.result.analyzedInstructions[0].steps ? 
-//                             data.result.analyzedInstructions[0].steps.map(s => s.step).join(" \n"):'',
-//                     image: data.result.image,
-//                     summary: data.result.summary.replace(/(<([^>]+)>)/gi, ""),
-//                     healtScore: data.result.healthScore,
-//                 }]
-//                 res.status(200).send(resApi)
-//             }
+const allInfo = async () => {
+    const infoDb = await dbInfo();
+    const infoApi = await getAllRecipes();
+    const infoAll = [...infoDb, ...infoApi];
+    return infoAll
+}
 
-//         } else {
-//             try {
-//                 const allPokemon = await joinAllRecipes();
-//                 res.json(allPokemon)
-//             } catch (error) {
-//                 console.log(error)
-//             }
-//         }
-//     }
-//     catch (error) {
-//         console.log(error)
-//     }
-// };
+const getRecipeId = async (id) =>{
+    try {
+        const resId = await allInfo();
+        const result = resId.find((ele)=> ele.id == id);
+        return result;
+    } catch (error) {
+        console.log(error);
+    }
+}
 
-// const joinAllRecipes = async () => {
-//     let apiInfo = await getPokeAPi();
-//     let dbInfo = await getDbInfo();
-//     let infoTotal = dbInfo.concat(apiInfo);
-//     return infoTotal;
-// }
+const getType = async () => {
+
+    const recetas = await allInfo();
+    let dieta = recetas.map((receta) => receta.diets);
+    let juntarDietas = dieta.join(',').split(',');
+  
+    let todasLasDietas = [];
+  
+    for (let i = 0; i < juntarDietas.length; i++) {
+      if(!todasLasDietas.includes(juntarDietas[i]) && juntarDietas[i]) {
+        todasLasDietas.push(juntarDietas[i])
+      }
+    }
+  
+  let resultType = todasLasDietas.map((dieta) => ({name: dieta})) 
+  
+    return resultType;
+  }
 
 module.exports = {
-    getAllRecipes
+    allInfo,
+    getQueryRecipes,
+    getRecipeId,
+    getType
 }
