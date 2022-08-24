@@ -67,7 +67,7 @@ const dbInfo = async () => {
 const allInfo = async () => {
     const infoDb = await dbInfo();
     const infoApi = await getAllRecipes();
-    const infoAll = [...infoDb, ...infoApi];
+    const infoAll = infoDb.concat(infoApi);
     return infoAll
 }
 
