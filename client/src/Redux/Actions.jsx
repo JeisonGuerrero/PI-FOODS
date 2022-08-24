@@ -1,12 +1,12 @@
 import axios from 'axios';
 
 
-const GET_ALL_RECIPES = 'GET_ALL_RECIPES';
-const GET_BY_NAME = 'GET_BY_NAME';
-const GET_BY_ID = 'GET_BY_ID';
-const GET_ALL_DIETS = 'GET_ALL_DIETS';
+export const GET_ALL_RECIPES = 'GET_ALL_RECIPES';
+export const GET_BY_NAME = 'GET_BY_NAME';
+export const GET_BY_ID = 'GET_BY_ID';
+export const GET_ALL_DIETS = 'GET_ALL_DIETS';
 
-const getAllRecipes = () => {
+export const getAllRecipes = () => {
     return async function (dispatch) {
     try {
         const response = await axios('http://localhost:3001/recipes');
@@ -20,7 +20,7 @@ const getAllRecipes = () => {
     }
 }
 
-const getRecipesByName = (name) => { 
+export const getRecipesByName = (name) => { 
     return async function (dispatch) {
     try {
         const response = await axios(`http://localhost:3001/recipes?name=${name}`);
@@ -34,7 +34,7 @@ const getRecipesByName = (name) => {
     }
 }
 
-const getRecipesById = (id) => { 
+export const getRecipesById = (id) => { 
     return async function (dispatch) {
     try {
         const response = await axios(`http://localhost:3001/recipes/${id}`);
@@ -48,7 +48,7 @@ const getRecipesById = (id) => {
     }
 }
 
-const getAllDiets = () => { 
+export const getAllDiets = () => { 
     return async function (dispatch) {
     try {
         const response = await axios('http://localhost:3001/diets');
@@ -62,13 +62,3 @@ const getAllDiets = () => {
     }
 }
 
-module.export = {
-    getAllRecipes,
-    getRecipesByName,
-    getRecipesById,
-    getAllDiets,
-    GET_ALL_RECIPES,
-    GET_BY_ID,
-    GET_BY_NAME,
-    GET_ALL_DIETS,    
-}
